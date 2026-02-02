@@ -147,26 +147,31 @@ def load_dataset_final_v17():
             if "outputC.csv" in files:
                 file_path = os.path.join(root, "outputC.csv")
                 break
-    if not os.path.exists(file_path): return None, None, None, None, None
+    if not os.path.exists(file_path):
+        return None, None, None, None
 
-    try: df_raw = pd.read_csv(file_path)
-    except: return None, None, None, None, None
+    try:
+        df_raw = pd.read_csv(file_path)
+    except:
+        return None, None, None, None
 
-    if 'player_name' not in df_raw.columns: return None, None, None, None, None
+    if 'player_name' not in df_raw.columns:
+        return None, None, None, None
     
     # Run the Pipeline
     model, threshold, df_processed = train_and_process(df_raw)
     
     # Filter Team A
     df_team_a = df_processed[df_processed['player_name'].str.startswith("TeamA", na=False)].copy()
-    if df_team_a.empty: return pd.DataFrame(), pd.DataFrame(), None, None, None
+    if df_team_a.empty:
+        return pd.DataFrame(), pd.DataFrame(), None, None
 
     # Anonymize Names
     unique_ids = df_team_a['player_name'].unique()
     id_map = {real_id: f"Player {i+1}" for i, real_id in enumerate(unique_ids)}
     df_team_a['Name'] = df_team_a['player_name'].map(id_map)
     
-    # Create "Risk" column (0-100 scale) for UI
+    # Create "Risk" column (0-100 scale)
     if 'injury_probability' in df_team_a.columns:
         df_team_a['Risk'] = df_team_a['injury_probability'] * 100
     else:
@@ -176,7 +181,6 @@ def load_dataset_final_v17():
     
     return df_latest, df_team_a, model, threshold
 
-df_latest, df_team_history, model, best_threshold = load_dataset_final_v17()
 
 if df_latest is None:
     st.error("❌ 'outputC.csv' not found.")
@@ -546,4 +550,5 @@ else:
             
         st.divider()
         st.subheader("My Trends")
+
         st.plotly_chart(render_history_chart(me_full, best_threshold*100), use_container_width=True)
